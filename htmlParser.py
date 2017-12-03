@@ -1,12 +1,12 @@
 import urllib.request
 from html.parser import HTMLParser
 
-links = set()
+links = []
 
-def get_html_from_url(url):
+def get_html_from_url(url, codec = "utf8"):
     page = urllib.request.urlopen(url)
     html = page.read()
-    return html.decode("utf8")
+    return html.decode(codec)
 
 
 class CacParser(HTMLParser):
@@ -14,16 +14,17 @@ class CacParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag == "a":
             for attr in attrs:
-                if attr[0] == "href" and attr[1].endswith(".csv"):
-                    links.add(attr[1])
+                if attr[0] == "href" and attr[1].endswith("/file"):
+                    links.append(attr[1])
 
-page_root = "https://support.spatialkey.com/spatialkey-sample-csv-data/"
+page_root = "http://www.correlatesofwar.org/data-sets/state-system-membership"
 html = get_html_from_url(page_root)
 parser = CacParser()
 parser.feed(html)
 
-for i, link in enumerate(links):
-    html = get_html_from_url(link)
-    f = open("./html/" + str(i) + ".csv", "w")
-    f.write(html)
-    f.close()
+
+for i in range(len(links)):
+    # first two are PDFs
+    if (i in [0,1]):
+        continue
+    urllib.request.urlretrieve(links[i], "./html/" + str(i) + ".csv")
